@@ -3,11 +3,11 @@ This is a Java Program which makes use of Java RMI to create a distributed syste
 Run the following commands to start the distributed server:
 ```bash
 $ rmiregistry 37029
-Ctrl+Z
+(Ctrl+Z)
 $ bg
 $ javac FEServer.java RepServer.java Client.java Status.java
 $ java FEServer
-Ctrl+Z
+(Ctrl+Z)
 $ bg
 $ java Client
 ```
