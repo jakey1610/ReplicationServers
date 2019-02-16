@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class RepServer implements ServerInterface{
 	private static List<List<String>> movies = new ArrayList<>();
 	private static List<List<String>> ratings = new ArrayList<>();
-	private static List<ServerInterface> servers = new ArrayList<>();
+	private static List<RepServer> servers = new ArrayList<>();
 	private Status status = Status.OFFLINE;
 	private int id;
 	public RepServer(int id){
@@ -45,12 +45,8 @@ public class RepServer implements ServerInterface{
 	}
 	public String getServers(){
 		String output = "";
-		try{
-			for(int i = 0; i < servers.size(); i++){
-				output = output + "Server " + i + " - " + servers.get(i).getStatus();
-			}
-		} catch(RemoteException e) {
-			e.printStackTrace();
+		for(int i = 0; i < servers.size(); i++){
+			output = output + "Server " + i + " - " + servers.get(i).getStatus(); 
 		}
 		return output;
 	}
@@ -63,7 +59,7 @@ public class RepServer implements ServerInterface{
 	public void setStatus(Status s){
 		status = s;
 	}
-	public void gossipServers(List<ServerInterface> servers) {
+	public void gossipServers(List<RepServer> servers) {
 		this.servers = servers;
 	}
 	public float getRating(String mName){
@@ -104,34 +100,14 @@ public class RepServer implements ServerInterface{
         return true;
 	}
 	public static void gossip(){
-		try{
-			for (int i = 0; i<servers.size(); i++) {
-				List<List<String>> other = servers.get(i).getRatingsList();
-				if (ratings.size() < other.size()){
-					ratings = other;
-				}
+		for (int i = 0; i<servers.size(); i++) {
+			List<List<String>> other = servers.get(i).getRatingsList();
+			if (ratings.size() < other.size()){
+				ratings = other;
 			}
-		} catch(RemoteException e){
-			e.printStackTrace();
 		}
 	}
 	public static void main(String args[]){
-		try{
-			Registry registry = LocateRegistry.getRegistry("localhost", 37029);
-			RepServer obj1 = new RepServer(1);
-			ServerInterface RStub1 = (ServerInterface) UnicastRemoteObject.exportObject(obj1,0);
-			registry.bind("RServer1", RStub1);
-			RepServer obj2 = new RepServer(2);
-			ServerInterface RStub2 = (ServerInterface) UnicastRemoteObject.exportObject(obj2,0);
-			registry.bind("RServer2", RStub2);
-			RepServer obj3 = new RepServer(3);
-			ServerInterface RStub3 = (ServerInterface) UnicastRemoteObject.exportObject(obj3,0);
-			registry.bind("RServer3", RStub3);
-			//Create a new stub to interact with the Replication Servers
-		} catch (Exception e) {
-			System.err.println("Server Exception: " + e.toString());
-			e.printStackTrace();
-		}
 		while(true){
 			try{
 				TimeUnit.SECONDS.sleep(1);

@@ -8,7 +8,7 @@ public class Client {
 	public static void main(String args[]){
 		try{
 			Registry registry = LocateRegistry.getRegistry("localhost", 37029);
-			FEServerInterface stub = (FEServerInterface) registry.lookup("FEServer");
+			ServerInterface stub = (ServerInterface) registry.lookup("FEServer");
 			System.out.println("  __  __            _        _____       _            ");
 			System.out.println(" |  \\/  |          (_)      |  __ \\     | |           ");
 			System.out.println(" | \\  / | _____   ___  ___  | |__) |__ _| |_ ___ _ __ ");
