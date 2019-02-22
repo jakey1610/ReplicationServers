@@ -2,7 +2,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
 import java.io.*;
-//Make the simple text interface for the distributed system.
+
 public class Client {
 	private Client() {}
 	public static void main(String args[]){

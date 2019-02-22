@@ -6,11 +6,13 @@ import java.util.*;
 import java.io.*;
 import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
+import java.sql.Timestamp;
 
 public class RepServer implements ServerInterface{
 	private static List<List<String>> movies = new ArrayList<>();
 	private static List<List<String>> ratings = new ArrayList<>();
 	private static List<ServerInterface> servers = new ArrayList<>();
+	private static List<List<String>> logs = new ArrayList<>();
 	private Status status = Status.OFFLINE;
 	private int id;
 	public RepServer(int id){
@@ -84,6 +86,8 @@ public class RepServer implements ServerInterface{
 			}
 		}
 		float average = (float)sum/(float)count;
+
+		logs.add(new ArrayList<String>(Arrays.asList("GR-"+movieID, Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
 		return average;
 	}
 	//Need to add in the feature to submit and update movie ratings;
@@ -101,9 +105,12 @@ public class RepServer implements ServerInterface{
 		List<String> newRating = Arrays.asList(Integer.toString(movieID), Integer.toString(rating), Long.toString(ZonedDateTime.now().toInstant().toEpochMilli()));
 		ratings.add(newRating);
 		//System.out.println(ratings.get(ratings.size()-1));
-        return true;
+		logs.add(new ArrayList<String>(Arrays.asList("SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
+		System.out.println(logs);
+    return true;
 	}
 	public static void gossip(){
+		//This needs to be reworked to send timestamp of each change. May need to keep a log of the most recent changes.
 		try{
 			for (int i = 0; i<servers.size(); i++) {
 				List<List<String>> other = servers.get(i).getRatingsList();
