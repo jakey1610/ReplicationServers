@@ -11,5 +11,5 @@ public interface ServerInterface extends Remote{
 	void setServerStatus(int serverNo, Status st) throws RemoteException;
 	Status getStatus() throws RemoteException;
 	void gossipServers(List<ServerInterface> servers) throws RemoteException;
-	List<List<String>> getRatingsList() throws RemoteException;
+	List<List<String>> getLogsList() throws RemoteException;
 }

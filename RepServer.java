@@ -42,8 +42,8 @@ public class RepServer implements ServerInterface{
 	public String sayHello() {
 		return "Hello, World!";
 	}
-	public List<List<String>> getRatingsList(){
-		return ratings;
+	public List<List<String>> getLogsList(){
+		return logs;
 	}
 	public String getServers(){
 		String output = "";
@@ -87,7 +87,7 @@ public class RepServer implements ServerInterface{
 		}
 		float average = (float)sum/(float)count;
 
-		logs.add(new ArrayList<String>(Arrays.asList("GR-"+movieID, Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
+		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "GR-"+movieID, Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
 		return average;
 	}
 	//Need to add in the feature to submit and update movie ratings;
@@ -105,18 +105,42 @@ public class RepServer implements ServerInterface{
 		List<String> newRating = Arrays.asList(Integer.toString(movieID), Integer.toString(rating), Long.toString(ZonedDateTime.now().toInstant().toEpochMilli()));
 		ratings.add(newRating);
 		//System.out.println(ratings.get(ratings.size()-1));
-		logs.add(new ArrayList<String>(Arrays.asList("SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
-		System.out.println(logs);
+		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()), newRating.get(1))));
     return true;
 	}
 	public static void gossip(){
 		//This needs to be reworked to send timestamp of each change. May need to keep a log of the most recent changes.
 		try{
 			for (int i = 0; i<servers.size(); i++) {
-				List<List<String>> other = servers.get(i).getRatingsList();
-				if (ratings.size() < other.size()){
-					ratings = other;
+				List<List<String>> other = servers.get(i).getLogsList();
+				int o = 0;
+				int l = 0;
+				List<List<String>> combLogs = new ArrayList<>();
+				while(true){
+					//attempt to interleave the logs on this server and others here to create joint dataset
+					if (Integer.parseInt(other.get(o).get(2)) < Integer.parseInt(logs.get(l).get(2))){
+						combLogs.add(other.get(o));
+						o+=1;
+					} else {
+						combLogs.add(logs.get(l));
+						l+=1;
+					}
+
+					if (l == logs.size()){
+						combLogs.addAll(other.subList(o, other.size()));
+						logs = combLogs;
+						break;
+					} else if (o == other.size()) {
+						combLogs.addAll(logs.subList(l, logs.size()));
+						logs = combLogs;
+						break;
+					}
 				}
+				//Now we have the logs in the right order need to edit data to fit the logs. Potentially for the last 5
+				
+
+				//To make sure that only changes from now are recorded
+				logs = new ArrayList<>();
 			}
 		} catch(RemoteException e){
 			e.printStackTrace();
