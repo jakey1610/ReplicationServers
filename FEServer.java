@@ -10,17 +10,13 @@ public class FEServer implements FEServerInterface {
 	private static List<ServerInterface> replicationServers = new ArrayList<>();
 	private static List<Status> repStatus = new ArrayList<>();
 	public FEServer() {
-		// for (int i = 0; i<3; i++) {
-		// 	replicationServers.add(new RepServer(i));
-		// 	repStatus.add(Status.ACTIVE);
-		// }
 		try{
 			for (int j = 0; j<replicationServers.size(); j++) {
 				List<ServerInterface> repServerCopy = new ArrayList<>(replicationServers);
 				repServerCopy.remove(j);
 				replicationServers.get(j).gossipServers(repServerCopy);
 			}
-		} catch(RemoteException e) {
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -115,6 +111,7 @@ public class FEServer implements FEServerInterface {
 			FEServerInterface Fstub = (FEServerInterface) UnicastRemoteObject.exportObject(obj,0);
 			Registry registry = LocateRegistry.getRegistry("localhost", 37029);
 			registry.bind("FEServer", Fstub);
+			//Lookup is not working here
 			ServerInterface RStub1 = (ServerInterface) registry.lookup("RServer1");
 			ServerInterface RStub2 = (ServerInterface) registry.lookup("RServer2");
 			ServerInterface RStub3 = (ServerInterface) registry.lookup("RServer3");

@@ -9,10 +9,10 @@ import java.util.concurrent.TimeUnit;
 import java.sql.Timestamp;
 
 public class RepServer implements ServerInterface{
-	private static List<List<String>> movies = new ArrayList<>();
-	private static List<List<String>> ratings = new ArrayList<>();
-	private static List<ServerInterface> servers = new ArrayList<>();
-	private static List<List<String>> logs = new ArrayList<>();
+	private List<List<String>> movies = new ArrayList<>();
+	private List<List<String>> ratings = new ArrayList<>();
+	private List<ServerInterface> servers = new ArrayList<>();
+	private List<List<String>> logs = new ArrayList<>();
 	private Status status = Status.OFFLINE;
 	private int id;
 	public RepServer(int id){
@@ -38,12 +38,16 @@ public class RepServer implements ServerInterface{
 			System.err.println("Server Exception: " + e.toString());
 			e.printStackTrace();
 		}
+
 	}
 	public String sayHello() {
 		return "Hello, World!";
 	}
 	public List<List<String>> getLogsList(){
 		return logs;
+	}
+	public List<List<String>> getRatingsList(){
+		return ratings;
 	}
 	public String getServers(){
 		String output = "";
@@ -108,7 +112,8 @@ public class RepServer implements ServerInterface{
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()), newRating.get(1))));
     return true;
 	}
-	public static void gossip(){
+	//gossip isn't working correctly
+	public void gossip(){
 		//This needs to be reworked to send timestamp of each change. May need to keep a log of the most recent changes.
 		try{
 			for (int i = 0; i<servers.size(); i++) {
@@ -136,8 +141,15 @@ public class RepServer implements ServerInterface{
 						break;
 					}
 				}
-				//Now we have the logs in the right order need to edit data to fit the logs. Potentially for the last 5
-				
+				//Now we have the logs in the right order need to edit data to fit the logs.
+				for(int j = 0; j < logs.size(); j++){
+					if(Integer.parseInt(logs.get(j).get(0)) != id && logs.get(j).get(1).contains("SR")){
+						String movieIDGiven = logs.get(j).get(1).split("-")[1];
+						String ratingGiven = logs.get(j).get(3);
+						String ts = logs.get(j).get(2);
+						ratings.add(new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts)));
+					}
+				}
 
 				//To make sure that only changes from now are recorded
 				logs = new ArrayList<>();
@@ -158,18 +170,20 @@ public class RepServer implements ServerInterface{
 			RepServer obj3 = new RepServer(3);
 			ServerInterface RStub3 = (ServerInterface) UnicastRemoteObject.exportObject(obj3,0);
 			registry.bind("RServer3", RStub3);
+			while(true){
+				try{
+					TimeUnit.SECONDS.sleep(1);
+				} catch (Exception e) {
+					System.out.println("exception :" + e.getMessage());
+				}
+				RStub1.gossip();
+				RStub2.gossip();
+				RStub3.gossip();
+			}
 			//Create a new stub to interact with the Replication Servers
 		} catch (Exception e) {
 			System.err.println("Server Exception: " + e.toString());
 			e.printStackTrace();
-		}
-		while(true){
-			try{
-				TimeUnit.SECONDS.sleep(1);
-			} catch (Exception e) {
-				System.out.println("exception :" + e.getMessage());
-			}
-			gossip();
 		}
 	}
 }
