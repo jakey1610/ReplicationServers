@@ -7,6 +7,7 @@ import java.io.*;
 import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 import java.sql.Timestamp;
+import java.math.*;
 
 public class RepServer implements ServerInterface{
 	private List<List<String>> movies = new ArrayList<>();
@@ -112,9 +113,8 @@ public class RepServer implements ServerInterface{
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()), newRating.get(1))));
     return true;
 	}
-	//gossip isn't working correctly
+	//gossip isn't working correctly/ at all. Either not gossiping at all or resending gossip causing score on movies rated to plummit or sore.
 	public void gossip(){
-		//This needs to be reworked to send timestamp of each change. May need to keep a log of the most recent changes.
 		try{
 			for (int i = 0; i<servers.size(); i++) {
 				List<List<String>> other = servers.get(i).getLogsList();
@@ -122,24 +122,31 @@ public class RepServer implements ServerInterface{
 				int l = 0;
 				List<List<String>> combLogs = new ArrayList<>();
 				while(true){
-					//attempt to interleave the logs on this server and others here to create joint dataset
-					if (Integer.parseInt(other.get(o).get(2)) < Integer.parseInt(logs.get(l).get(2))){
-						combLogs.add(other.get(o));
-						o+=1;
-					} else {
-						combLogs.add(logs.get(l));
-						l+=1;
-					}
-
-					if (l == logs.size()){
+					//Need to check for both being equal to size
+					if (l == logs.size() && o < other.size()){
 						combLogs.addAll(other.subList(o, other.size()));
 						logs = combLogs;
 						break;
-					} else if (o == other.size()) {
+					} else if (o == other.size() && l < logs.size()) {
 						combLogs.addAll(logs.subList(l, logs.size()));
 						logs = combLogs;
 						break;
+					} else if (o == other.size() && l == logs.size()) {
+						break;
 					}
+					//attempt to interleave the logs on this server and others here to create joint dataset
+					if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == 1){
+						combLogs.add(other.get(o));
+						o+=1;
+					} else if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == -1){
+						combLogs.add(logs.get(l));
+						l+=1;
+					} else {
+						combLogs.add(logs.get(l));
+						o+=1;
+						l+=1;
+					}
+					logs = combLogs;
 				}
 				//Now we have the logs in the right order need to edit data to fit the logs.
 				for(int j = 0; j < logs.size(); j++){
@@ -151,9 +158,9 @@ public class RepServer implements ServerInterface{
 					}
 				}
 
-				//To make sure that only changes from now are recorded
-				logs = new ArrayList<>();
+				//logs = new ArrayList<>();
 			}
+			//System.out.println(ratings.get(ratings.size()-1));
 		} catch(RemoteException e){
 			e.printStackTrace();
 		}

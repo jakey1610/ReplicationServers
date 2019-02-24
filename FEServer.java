@@ -9,17 +9,7 @@ import java.io.*;
 public class FEServer implements FEServerInterface {
 	private static List<ServerInterface> replicationServers = new ArrayList<>();
 	private static List<Status> repStatus = new ArrayList<>();
-	public FEServer() {
-		try{
-			for (int j = 0; j<replicationServers.size(); j++) {
-				List<ServerInterface> repServerCopy = new ArrayList<>(replicationServers);
-				repServerCopy.remove(j);
-				replicationServers.get(j).gossipServers(repServerCopy);
-			}
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
+	public FEServer() {}
 	public void updateStatus(){
 		repStatus = new ArrayList<>();
 		try{
@@ -121,6 +111,11 @@ public class FEServer implements FEServerInterface {
 			repStatus.add(Status.ACTIVE);
 			repStatus.add(Status.ACTIVE);
 			repStatus.add(Status.ACTIVE);
+			for (int j = 0; j<replicationServers.size(); j++) {
+				List<ServerInterface> repServerCopy = new ArrayList<>(replicationServers);
+				repServerCopy.remove(j);
+				replicationServers.get(j).gossipServers(repServerCopy);
+			}
 			//Create a new stub to interact with the Replication Servers
 		} catch (Exception e) {
 			System.err.println("Server Exception: " + e.toString());
