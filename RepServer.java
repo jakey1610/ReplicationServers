@@ -113,9 +113,10 @@ public class RepServer implements ServerInterface{
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()), newRating.get(1))));
     return true;
 	}
-	//gossip isn't working correctly/ at all. Either not gossiping at all or resending gossip causing score on movies rated to plummit or sore.
+	//data being added repeatedly. Logs are correct
 	public void gossip(){
 		try{
+			int lOld = 0;
 			for (int i = 0; i<servers.size(); i++) {
 				List<List<String>> other = servers.get(i).getLogsList();
 				int o = 0;
@@ -131,34 +132,41 @@ public class RepServer implements ServerInterface{
 						combLogs.addAll(logs.subList(l, logs.size()));
 						logs = combLogs;
 						break;
-					} else if (o == other.size() && l == logs.size()) {
+					} else if (o < other.size() && l < logs.size()) {
+						//attempt to interleave the logs on this server and others here to create joint dataset
+						if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == 1){
+							combLogs.add(other.get(o));
+							o+=1;
+						} else if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == -1){
+							combLogs.add(logs.get(l));
+							l+=1;
+						} else {
+							combLogs.add(logs.get(l));
+							o+=1;
+							l+=1;
+						}
+					} else {
 						break;
 					}
-					//attempt to interleave the logs on this server and others here to create joint dataset
-					if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == 1){
-						combLogs.add(other.get(o));
-						o+=1;
-					} else if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == -1){
-						combLogs.add(logs.get(l));
-						l+=1;
-					} else {
-						combLogs.add(logs.get(l));
-						o+=1;
-						l+=1;
-					}
-					logs = combLogs;
+					
 				}
+				logs = combLogs;
 				//Now we have the logs in the right order need to edit data to fit the logs.
+				//data being added repeatedly because same logs are being viewed again and again
 				for(int j = 0; j < logs.size(); j++){
 					if(Integer.parseInt(logs.get(j).get(0)) != id && logs.get(j).get(1).contains("SR")){
 						String movieIDGiven = logs.get(j).get(1).split("-")[1];
 						String ratingGiven = logs.get(j).get(3);
 						String ts = logs.get(j).get(2);
-						ratings.add(new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts)));
+						//Check the list equality as below and this should work.
+						if ((new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts))).equals(ratings.get(ratings.size()-1))){
+							continue;
+						} else {
+							ratings.add(new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts)));
+						}
 					}
 				}
-
-				//logs = new ArrayList<>();
+				System.out.println(ratings.subList(ratings.size()-3, ratings.size()));
 			}
 			//System.out.println(ratings.get(ratings.size()-1));
 		} catch(RemoteException e){
@@ -179,7 +187,7 @@ public class RepServer implements ServerInterface{
 			registry.bind("RServer3", RStub3);
 			while(true){
 				try{
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(5);
 				} catch (Exception e) {
 					System.out.println("exception :" + e.getMessage());
 				}
