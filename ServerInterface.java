@@ -14,4 +14,6 @@ public interface ServerInterface extends Remote{
 	List<List<String>> getLogsList() throws RemoteException;
 	List<List<String>> getRatingsList() throws RemoteException;
 	void gossip() throws RemoteException;
+	List<List<String>> getMoviesList() throws RemoteException;
+	void addToMoviesList(List<String> movie) throws RemoteException;
 }

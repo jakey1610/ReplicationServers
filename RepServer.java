@@ -100,19 +100,37 @@ public class RepServer implements ServerInterface{
 	//and add another column which holds the rating for the movie.
 	public Boolean submitRating(String mName, int rating) {
 		int movieID = -1;
+		int largestMovieID = 1;
 		for(int i = 0; i < movies.size(); i++) {
-			if (movies.get(i).get(1).contains(mName)) {
-				movieID = Integer.parseInt(movies.get(i).get(0));
-				break;
+		  if (movies.get(i).get(1).contains(mName) && movieID == -1) {
+		    movieID = Integer.parseInt(movies.get(i).get(0));
+		  }
+		  if(Integer.parseInt(movies.get(i).get(0))>largestMovieID){
+		    largestMovieID = Integer.parseInt(movies.get(i).get(0));
+		  }
+		}
+		if(movieID == -1){
+		  movieID = largestMovieID + 1;
+		  movies.add(Arrays.asList(Integer.toString(movieID), mName, ""));
+			for(int i = 0; i < servers.size(); i++){
+				servers.get(i).addToMoviesList(Arrays.asList(Integer.toString(movieID), mName, ""));
 			}
 		}
-		if(movieID == -1){return false;}
 		List<String> newRating = Arrays.asList(Integer.toString(movieID), Integer.toString(rating), Long.toString(ZonedDateTime.now().toInstant().toEpochMilli()));
 		ratings.add(newRating);
 		//System.out.println(ratings.get(ratings.size()-1));
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()), newRating.get(1))));
     return true;
 	}
+
+	public List<List<String>> getMoviesList(){
+	  return movies;
+	}
+
+	public void addToMoviesList(List<String> movie){
+		movies.add(movie);
+	}
+
 	//data being added repeatedly. Logs are correct
 	public void gossip(){
 		try{
@@ -148,8 +166,9 @@ public class RepServer implements ServerInterface{
 					} else {
 						break;
 					}
-					
+
 				}
+				//smartCombine(movies, servers.get(i).getMoviesList());
 				logs = combLogs;
 				//Now we have the logs in the right order need to edit data to fit the logs.
 				//data being added repeatedly because same logs are being viewed again and again
@@ -166,7 +185,7 @@ public class RepServer implements ServerInterface{
 						}
 					}
 				}
-				System.out.println(ratings.subList(ratings.size()-3, ratings.size()));
+
 			}
 			//System.out.println(ratings.get(ratings.size()-1));
 		} catch(RemoteException e){
@@ -187,7 +206,7 @@ public class RepServer implements ServerInterface{
 			registry.bind("RServer3", RStub3);
 			while(true){
 				try{
-					TimeUnit.SECONDS.sleep(5);
+					TimeUnit.SECONDS.sleep(1);
 				} catch (Exception e) {
 					System.out.println("exception :" + e.getMessage());
 				}
