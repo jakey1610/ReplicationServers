@@ -112,8 +112,12 @@ public class RepServer implements ServerInterface{
 		if(movieID == -1){
 		  movieID = largestMovieID + 1;
 		  movies.add(Arrays.asList(Integer.toString(movieID), mName, ""));
-			for(int i = 0; i < servers.size(); i++){
-				servers.get(i).addToMoviesList(Arrays.asList(Integer.toString(movieID), mName, ""));
+			try{
+				for(int i = 0; i < servers.size(); i++){
+					servers.get(i).addToMoviesList(Arrays.asList(Integer.toString(movieID), mName, ""));
+				}
+			} catch(RemoteException e){
+				System.err.println(e);
 			}
 		}
 		List<String> newRating = Arrays.asList(Integer.toString(movieID), Integer.toString(rating), Long.toString(ZonedDateTime.now().toInstant().toEpochMilli()));
