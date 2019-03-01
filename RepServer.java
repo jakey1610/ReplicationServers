@@ -8,7 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 import java.sql.Timestamp;
 import java.math.*;
-
+//Gossip offline move permanent
+//This needs to be implemented later on,
 public class RepServer implements ServerInterface{
 	private List<List<String>> movies = new ArrayList<>();
 	private List<List<String>> ratings = new ArrayList<>();
@@ -23,7 +24,22 @@ public class RepServer implements ServerInterface{
 		    String line;
 		    while ((line = br.readLine()) != null) {
 		        String[] values = line.split(",");
-		        movies.add(Arrays.asList(values));
+						List<String> listValues = new ArrayList<String>(Arrays.asList(values));
+						// var status = false;
+						// while (!status){
+						// 	System.out.println(listValues);
+						// 	if (!(listValues.get(1).contains(")")) || listValues.get(2) == "(no genres listed)" || listValues.get(2) == "") {
+						// 			 status = true;
+						// 	 } else {
+						// 			 status = false;
+						// 			 String i = listValues.get(1);
+						// 			 String j = listValues.get(2);
+						// 			 i= i.concat(j);
+						// 			 listValues.set(0,i);
+						// 			 listValues.remove(1);
+						// 	 }
+						// }
+		        movies.add(listValues);
 		    }
 		} catch (Exception e) {
 			System.err.println("Server Exception: " + e.toString());
