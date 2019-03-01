@@ -8,8 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 import java.sql.Timestamp;
 import java.math.*;
-//Gossip offline move permanent
-//This needs to be implemented later on,
+
 public class RepServer implements ServerInterface{
 	private List<List<String>> movies = new ArrayList<>();
 	private List<List<String>> ratings = new ArrayList<>();
@@ -111,9 +110,7 @@ public class RepServer implements ServerInterface{
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "GR-"+movieID, Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
 		return average;
 	}
-	//Need to add in the feature to submit and update movie ratings;
-	//Potentially, don't use the ratings.csv and instead use the movies.csv,
-	//and add another column which holds the rating for the movie.
+
 	public Boolean submitRating(String mName, int rating) {
 		int movieID = -1;
 		int largestMovieID = 1;
@@ -151,7 +148,6 @@ public class RepServer implements ServerInterface{
 		movies.add(movie);
 	}
 
-	//data being added repeatedly. Logs are correct
 	public void gossip(){
 		try{
 			int lOld = 0;
@@ -161,7 +157,6 @@ public class RepServer implements ServerInterface{
 				int l = 0;
 				List<List<String>> combLogs = new ArrayList<>();
 				while(true){
-					//Need to check for both being equal to size
 					if (l == logs.size() && o < other.size()){
 						combLogs.addAll(other.subList(o, other.size()));
 						logs = combLogs;
@@ -188,10 +183,8 @@ public class RepServer implements ServerInterface{
 					}
 
 				}
-				//smartCombine(movies, servers.get(i).getMoviesList());
 				logs = combLogs;
 				//Now we have the logs in the right order need to edit data to fit the logs.
-				//data being added repeatedly because same logs are being viewed again and again
 				for(int j = 0; j < logs.size(); j++){
 					if(Integer.parseInt(logs.get(j).get(0)) != id && logs.get(j).get(1).contains("SR")){
 						String movieIDGiven = logs.get(j).get(1).split("-")[1];

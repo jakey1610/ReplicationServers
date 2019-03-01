@@ -5,10 +5,10 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.io.*;
 
-//Potentially send the list of other servers to each server so that they can "gossip"
 public class FEServer implements FEServerInterface {
 	private static List<ServerInterface> replicationServers = new ArrayList<>();
 	private static List<Status> repStatus = new ArrayList<>();
+	private static int curServer = 0;
 	public FEServer() {}
 	public void updateStatus(){
 		repStatus = new ArrayList<>();
@@ -45,16 +45,19 @@ public class FEServer implements FEServerInterface {
 	public float getRating(String mName){
 		updateStatus();
 		float rate = 0;
-		int chosenServer = -1;
-		for (int i = 0; i < replicationServers.size(); i++) {
-			if (repStatus.get(i) == Status.ACTIVE) {
-				chosenServer = i;
-				break;
+		int chosenServer = curServer;
+		try{
+			while (replicationServers.get(chosenServer).getStatus() != Status.ACTIVE){
+				chosenServer += 1;
+				chosenServer %= 3;
 			}
+		} catch(RemoteException e) {
+			System.err.println(e);
 		}
-		if (chosenServer == -1) {
-			System.out.println("Server currently unavailable...");
-		}
+		curServer = chosenServer;
+		// if (chosenServer == -1) {
+		// 	System.out.println("Server currently unavailable...");
+		// }
 		// if (chosenServer == -1) {
 		// 	replicationServers.add(new RepServer(replicationServers.size()-1));
 		// 	repStatus.add(Status.ACTIVE);
