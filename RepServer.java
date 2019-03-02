@@ -14,6 +14,7 @@ public class RepServer implements ServerInterface{
 	private List<List<String>> ratings = new ArrayList<>();
 	private List<ServerInterface> servers = new ArrayList<>();
 	private List<List<String>> logs = new ArrayList<>();
+	private int[] vecClock = new int[]{0,0,0};
 	private Status status = Status.OFFLINE;
 	private int id;
 	public RepServer(int id){
@@ -108,6 +109,7 @@ public class RepServer implements ServerInterface{
 		float average = (float)sum/(float)count;
 
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "GR-"+movieID, Long.toString(new Timestamp(System.currentTimeMillis()).getTime()))));
+		vecClock[id-1]+=1;
 		return average;
 	}
 
@@ -137,6 +139,7 @@ public class RepServer implements ServerInterface{
 		ratings.add(newRating);
 		//System.out.println(ratings.get(ratings.size()-1));
 		logs.add(new ArrayList<String>(Arrays.asList(Integer.toString(id), "SR-"+newRating.get(0), Long.toString(new Timestamp(System.currentTimeMillis()).getTime()), newRating.get(1))));
+		vecClock[id-1]+= 1;
     return true;
 	}
 
@@ -148,57 +151,51 @@ public class RepServer implements ServerInterface{
 		movies.add(movie);
 	}
 
+	public int[] getVecClock(){
+		return vecClock;
+	}
+
+	public void setVecClock(int[] vc){
+		vecClock = vc;
+	}
+
+	//Need to increment the vector clock of each machine for the following:
+	// * When sent communication between RepServer (check)
+	// * For internal event (check)
+	// * Receiving a message (check)
+	// * Update to be max of vecClock and received vecClock. (check)
+	// 		- Then need to make the data consistent by checking logs. (check)
 	public void gossip(){
 		try{
-			int lOld = 0;
 			for (int i = 0; i<servers.size(); i++) {
-				List<List<String>> other = servers.get(i).getLogsList();
-				int o = 0;
-				int l = 0;
-				List<List<String>> combLogs = new ArrayList<>();
-				while(true){
-					if (l == logs.size() && o < other.size()){
-						combLogs.addAll(other.subList(o, other.size()));
-						logs = combLogs;
-						break;
-					} else if (o == other.size() && l < logs.size()) {
-						combLogs.addAll(logs.subList(l, logs.size()));
-						logs = combLogs;
-						break;
-					} else if (o < other.size() && l < logs.size()) {
-						//attempt to interleave the logs on this server and others here to create joint dataset
-						if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == 1){
-							combLogs.add(other.get(o));
-							o+=1;
-						} else if ((new BigInteger(logs.get(l).get(2))).compareTo((new BigInteger(other.get(o).get(2)))) == -1){
-							combLogs.add(logs.get(l));
-							l+=1;
-						} else {
-							combLogs.add(logs.get(l));
-							o+=1;
-							l+=1;
+				// vecClock[id-1] += 1;
+				// vecClock[i] += 1;
+				int[] diff = new int[3];
+				for(int j =0; j<3; j++){
+		      diff[j] = servers.get(i).getVecClock()[j] - vecClock[j];
+		    }
+				//For all of the positive diffs go and get the logs for the appropriate servers and update the data accordingly.
+				for(int l = 0; l < diff.length; l++){
+					if(diff[l] > 0){
+						//get the logs for server l
+						List<List<String>> other = servers.get(i).getLogsList();
+						logs.addAll(other.subList(other.size()-diff[l], other.size()));
+						for (int k = logs.size()-1; k >= logs.size()-diff[l]; k--){
+							if (logs.get(k).get(1).contains("SR")){
+								String movieIDGiven = logs.get(k).get(1).split("-")[1];
+								String ratingGiven = logs.get(k).get(3);
+								String ts = logs.get(k).get(2);
+								//Check the list equality as below and this should work.
+								if ((new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts))).equals(ratings.get(ratings.size()-1))){
+									continue;
+								} else {
+									ratings.add(new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts)));
+								}
+							}
 						}
-					} else {
-						break;
-					}
-
-				}
-				logs = combLogs;
-				//Now we have the logs in the right order need to edit data to fit the logs.
-				for(int j = 0; j < logs.size(); j++){
-					if(Integer.parseInt(logs.get(j).get(0)) != id && logs.get(j).get(1).contains("SR")){
-						String movieIDGiven = logs.get(j).get(1).split("-")[1];
-						String ratingGiven = logs.get(j).get(3);
-						String ts = logs.get(j).get(2);
-						//Check the list equality as below and this should work.
-						if ((new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts))).equals(ratings.get(ratings.size()-1))){
-							continue;
-						} else {
-							ratings.add(new ArrayList<>(Arrays.asList(movieIDGiven, ratingGiven, ts)));
-						}
+						vecClock[l]+=diff[l];
 					}
 				}
-
 			}
 			//System.out.println(ratings.get(ratings.size()-1));
 		} catch(RemoteException e){
@@ -219,7 +216,7 @@ public class RepServer implements ServerInterface{
 			registry.bind("RServer3", RStub3);
 			while(true){
 				try{
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(3);
 				} catch (Exception e) {
 					System.out.println("exception :" + e.getMessage());
 				}
