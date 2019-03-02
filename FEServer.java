@@ -54,7 +54,9 @@ public class FEServer implements FEServerInterface {
 		} catch(RemoteException e) {
 			System.err.println(e);
 		}
-		curServer = chosenServer;
+		if(replicationServers.get(curServer).getStatus() != Status.OVERLOADED){
+			curServer = chosenServer;
+		}
 		// if (chosenServer == -1) {
 		// 	System.out.println("Server currently unavailable...");
 		// }
