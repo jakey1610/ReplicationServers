@@ -7,4 +7,5 @@ public interface FEServerInterface extends Remote{
 	Boolean submitRating(String mName, int rating) throws RemoteException;
 	String getServers() throws RemoteException;
 	void setServerStatus(int serverNo, Status st) throws RemoteException;
+	void setRandomStatus(Boolean s) throws RemoteException;
 }

@@ -4,6 +4,7 @@ import java.util.*;
 import java.io.*;
 
 public class Client {
+	private static Boolean randomStatus = false;
 	private Client() {}
 	public static void main(String args[]){
 		try{
@@ -21,7 +22,8 @@ public class Client {
 	            System.out.println("(1) Get Rating");
 	            System.out.println("(2) Submit Rating");
 	            System.out.println("(3) Alter Servers");
-	            System.out.println("(4) Exit");
+							System.out.println("(4) Toggle Automatic Server Alteration");
+	            System.out.println("(5) Exit");
 	            System.out.println("Please enter your choice: ");
 	            Scanner a = new Scanner(System.in);
 	            int choice = a.nextInt();
@@ -59,7 +61,7 @@ public class Client {
 	            	a.nextLine();
 	            	String s = a.nextLine();
 	            	Status st = Status.ACTIVE;
-	            	if (s.contains("online")) {
+	            	if (s.contains("active")) {
 	            		st = Status.ACTIVE;
 	            	} else if (s.contains("offline")) {
 	            		st = Status.OFFLINE;
@@ -69,7 +71,10 @@ public class Client {
 	            		System.out.println("This is not an option...");
 	            	}
 	            	stub.setServerStatus(server, st);
-	            } else if (choice == 4) {
+	            } else if(choice == 4){
+								stub.setRandomStatus(!randomStatus);
+								randomStatus = !randomStatus;
+							} else if (choice == 5) {
 	            	status = true;
 	            } else {
 	            	System.out.println("Sorry, this is not one of the choices.");

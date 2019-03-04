@@ -4,11 +4,13 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 public class FEServer implements FEServerInterface {
 	private static List<ServerInterface> replicationServers = new ArrayList<>();
 	private static List<Status> repStatus = new ArrayList<>();
 	private static int curServer = 0;
+	private static Boolean changeSRandom = false;
 	public FEServer() {}
 	public void updateStatus(){
 		repStatus = new ArrayList<>();
@@ -33,11 +35,35 @@ public class FEServer implements FEServerInterface {
 	}
 	public void setServerStatus(int serverNo, Status status){
 		try{
+			//Make printthis method in client to print this on the client.
 			System.out.println("Server " + serverNo + " set to status: " + status + ".\n");
 			replicationServers.get(serverNo).setServerStatus(serverNo, status);
 		} catch(RemoteException e){
 			e.printStackTrace();
 		}
+	}
+	//This needs to be tested before committing.
+	public static void randomServerStatus(){
+		//select the random server
+		double RD = Math.random();
+		RD = RD * 3;
+		int randomServer = (int) RD;
+		//select the random Status
+		List<Status> statuses = new ArrayList<Status>(Arrays.asList(Status.ACTIVE, Status.OFFLINE, Status.OVERLOADED));
+		RD = Math.random();
+		RD = RD * 3;
+		int Rd = (int) RD;
+		Status randomStatus = statuses.get(Rd);
+		//apply the status to the server
+		try{
+			replicationServers.get(randomServer).setStatus(randomStatus);
+		} catch (RemoteException e){
+			System.err.println(e);
+		}
+	}
+
+	public void setRandomStatus(Boolean s){
+		changeSRandom = s;
 	}
 	public String sayHello() {
 		return "Hello, World!";
@@ -76,12 +102,17 @@ public class FEServer implements FEServerInterface {
 	public Boolean submitRating(String mName, int rating) {
 		updateStatus();
 		Boolean rated = false;
-		int chosenServer = -1;
-		for (int i = 0; i < replicationServers.size(); i++) {
-			if (repStatus.get(i) == Status.ACTIVE) {
-				chosenServer = i;
-				break;
+		int chosenServer = curServer;
+		try{
+			while (replicationServers.get(chosenServer).getStatus() != Status.ACTIVE){
+				chosenServer += 1;
+				chosenServer %= 3;
 			}
+			if(replicationServers.get(curServer).getStatus() != Status.OVERLOADED){
+				curServer = chosenServer;
+			}
+		} catch(RemoteException e) {
+			System.err.println(e);
 		}
 		// if (chosenServer == -1) {
 		// 	replicationServers.add(new RepServer(replicationServers.size()));
@@ -122,7 +153,23 @@ public class FEServer implements FEServerInterface {
 				repServerCopy.remove(j);
 				replicationServers.get(j).gossipServers(repServerCopy);
 			}
-			//Create a new stub to interact with the Replication Servers
+			Thread thread = new Thread(new Runnable() {
+
+			     public void run() {
+						 try{
+							 while(true){
+								 if(changeSRandom){
+									 randomServerStatus();
+								 }
+								 TimeUnit.SECONDS.sleep(15);
+							 }
+						 } catch(Exception e) {
+							 System.err.println(e);
+						 }
+			     }
+
+			});
+			thread.start();
 		} catch (Exception e) {
 			System.err.println("Server Exception: " + e.toString());
 			e.printStackTrace();

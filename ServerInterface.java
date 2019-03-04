@@ -18,4 +18,5 @@ public interface ServerInterface extends Remote{
 	void addToMoviesList(List<String> movie) throws RemoteException;
 	int[] getVecClock() throws RemoteException;
 	void setVecClock(int[] vc) throws RemoteException;
+	void setStatus(Status s) throws RemoteException;
 }
