@@ -5,7 +5,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.TimeUnit;
-
+//Create registry from the main function using the function in GC
+//Try to run RepServer from here
 public class FEServer implements FEServerInterface {
 	private static List<ServerInterface> replicationServers = new ArrayList<>();
 	private static List<Status> repStatus = new ArrayList<>();
@@ -134,11 +135,35 @@ public class FEServer implements FEServerInterface {
 	}
 	public static void main(String args[]){
 		try{
+			//createRegistry(37029);
+			LocateRegistry.createRegistry(37029);
+			Registry registry = LocateRegistry.getRegistry("localhost", 37029);
 			FEServer obj = new FEServer();
 			FEServerInterface Fstub = (FEServerInterface) UnicastRemoteObject.exportObject(obj,0);
-			Registry registry = LocateRegistry.getRegistry("localhost", 37029);
 			registry.bind("FEServer", Fstub);
+			Thread thread = new Thread(new Runnable() {
+
+			     public void run() {
+						 try{
+							 RepServer RS = new RepServer(4);
+				 			 RS.main(new String[0]);
+							 while(true){
+								 if(changeSRandom){
+									 randomServerStatus();
+								 }
+								 TimeUnit.SECONDS.sleep(15);
+							 }
+						 } catch(Exception e) {
+							 System.err.println(e);
+						 }
+			     }
+
+			});
+			thread.start();
+
 			//Lookup is not working here
+			//Check this; try to find a way not completely dependent on sleep
+			TimeUnit.SECONDS.sleep(3);
 			ServerInterface RStub1 = (ServerInterface) registry.lookup("RServer1");
 			ServerInterface RStub2 = (ServerInterface) registry.lookup("RServer2");
 			ServerInterface RStub3 = (ServerInterface) registry.lookup("RServer3");
@@ -153,23 +178,7 @@ public class FEServer implements FEServerInterface {
 				repServerCopy.remove(j);
 				replicationServers.get(j).gossipServers(repServerCopy);
 			}
-			Thread thread = new Thread(new Runnable() {
 
-			     public void run() {
-						 try{
-							 while(true){
-								 if(changeSRandom){
-									 randomServerStatus();
-								 }
-								 TimeUnit.SECONDS.sleep(15);
-							 }
-						 } catch(Exception e) {
-							 System.err.println(e);
-						 }
-			     }
-
-			});
-			thread.start();
 		} catch (Exception e) {
 			System.err.println("Server Exception: " + e.toString());
 			e.printStackTrace();
