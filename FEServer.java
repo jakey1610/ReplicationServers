@@ -160,28 +160,37 @@ public class FEServer implements FEServerInterface {
 
 			});
 			thread.start();
-
-			//Lookup is not working here
-			//Check this; try to find a way not completely dependent on sleep
-			TimeUnit.SECONDS.sleep(3);
-			ServerInterface RStub1 = (ServerInterface) registry.lookup("RServer1");
-			ServerInterface RStub2 = (ServerInterface) registry.lookup("RServer2");
-			ServerInterface RStub3 = (ServerInterface) registry.lookup("RServer3");
-			replicationServers.add(RStub1);
-			replicationServers.add(RStub2);
-			replicationServers.add(RStub3);
-			repStatus.add(Status.ACTIVE);
-			repStatus.add(Status.ACTIVE);
-			repStatus.add(Status.ACTIVE);
-			for (int j = 0; j<replicationServers.size(); j++) {
-				List<ServerInterface> repServerCopy = new ArrayList<>(replicationServers);
-				repServerCopy.remove(j);
-				replicationServers.get(j).gossipServers(repServerCopy);
-			}
-
-		} catch (Exception e) {
+		} catch (Exception e){
 			System.err.println("Server Exception: " + e.toString());
 			e.printStackTrace();
+		}
+		Boolean passed = false;
+		while(!passed){
+			try{
+				Registry registry = LocateRegistry.getRegistry("localhost", 37029);
+				ServerInterface RStub1 = (ServerInterface) registry.lookup("RServer1");
+				ServerInterface RStub2 = (ServerInterface) registry.lookup("RServer2");
+				ServerInterface RStub3 = (ServerInterface) registry.lookup("RServer3");
+				passed = true;
+				replicationServers.add(RStub1);
+				replicationServers.add(RStub2);
+				replicationServers.add(RStub3);
+				repStatus.add(Status.ACTIVE);
+				repStatus.add(Status.ACTIVE);
+				repStatus.add(Status.ACTIVE);
+				for (int j = 0; j<replicationServers.size(); j++) {
+					List<ServerInterface> repServerCopy = new ArrayList<>(replicationServers);
+					repServerCopy.remove(j);
+					replicationServers.get(j).gossipServers(repServerCopy);
+				}
+
+			} catch (Exception e) {
+				try{
+					TimeUnit.SECONDS.sleep(3);
+				} catch(Exception e1){
+					System.out.println(e1);
+				}
+			}
 		}
 	}
 }
