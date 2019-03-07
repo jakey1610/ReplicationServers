@@ -11,6 +11,7 @@ public class FEServer implements FEServerInterface {
 	private static List<ServerInterface> replicationServers = new ArrayList<>();
 	private static List<Status> repStatus = new ArrayList<>();
 	private static int curServer = 0;
+	private static int[] vecTimestampTable = new int[]{0,0,0};
 	private static Boolean changeSRandom = false;
 	public FEServer() {}
 	public void updateStatus(){
@@ -81,6 +82,7 @@ public class FEServer implements FEServerInterface {
 			if(replicationServers.get(curServer).getStatus() != Status.OVERLOADED){
 				curServer = chosenServer;
 			}
+			vecTimestampTable[chosenServer]+=1;
 		} catch(RemoteException e) {
 			System.err.println(e);
 		}
@@ -112,6 +114,7 @@ public class FEServer implements FEServerInterface {
 			if(replicationServers.get(curServer).getStatus() != Status.OVERLOADED){
 				curServer = chosenServer;
 			}
+			vecTimestampTable[chosenServer]+=1;
 		} catch(RemoteException e) {
 			System.err.println(e);
 		}
