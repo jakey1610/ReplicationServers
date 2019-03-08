@@ -74,10 +74,16 @@ public class FEServer implements FEServerInterface {
 		updateStatus();
 		float rate = 0;
 		int chosenServer = curServer;
+		int count = 0;
 		try{
 			while (replicationServers.get(chosenServer).getStatus() != Status.ACTIVE){
 				chosenServer += 1;
 				chosenServer %= 3;
+				count+=1;
+				if(count == 9){
+					System.out.println("Try again later.");
+					return (float) -1.0;
+				}
 			}
 			if(replicationServers.get(curServer).getStatus() != Status.OVERLOADED){
 				curServer = chosenServer;
@@ -106,10 +112,16 @@ public class FEServer implements FEServerInterface {
 		updateStatus();
 		Boolean rated = false;
 		int chosenServer = curServer;
+		int count = 0;
 		try{
 			while (replicationServers.get(chosenServer).getStatus() != Status.ACTIVE){
 				chosenServer += 1;
 				chosenServer %= 3;
+				count+=1;
+				if(count == 9){
+					System.out.println("Try again later.");
+					return false;
+				}
 			}
 			if(replicationServers.get(curServer).getStatus() != Status.OVERLOADED){
 				curServer = chosenServer;

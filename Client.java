@@ -38,7 +38,9 @@ public class Client {
 	            		float res = stub.getRating(movie);
 	            		if (res == 0){
 	            			System.out.println("There have been no ratings for this movie.");
-	            		} else {
+	            		} else if(res == -1.0) {
+										System.out.println("Could not process request at the moment.");
+									} else {
 	            			System.out.println("The movie you searched for scored a " + res + " rating.");
 	            		}
 	            	}
@@ -51,7 +53,12 @@ public class Client {
 	            	} else {
 	            		System.out.println("What rating would you like to give? ");
 	            		int rating = a.nextInt();
-	            		stub.submitRating(movie, rating);
+	            		Boolean r = stub.submitRating(movie, rating);
+									if(r){
+										System.out.println("Update submitted.");
+									} else {
+										System.out.println("Could not process request at the moment.");
+									}
 	            	}
 	            } else if (choice == 3) {
 	            	System.out.print(stub.getServers());
